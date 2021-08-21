@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<title>entertainment</title>
+
+		<style>
+			body {
+				background-color: #999;
+				padding: 0;
+				margin: 0;
+			}
+			
+			.track-table {
+				width: 500px;
+			}
+
+			.controls {
+				background-color: #AAA;
+				padding: 2em 0em;
+			}
+
+			.icon-row {
+				display: flex;
+				justify-content: center;
+				width: 100%;
+			}
+
+			.icon-row button {
+				background: 0;
+				border: 0;
+			}
+
+			.icon-row button img {
+				height: 7em;
+			}
+
+			.icon-row button.small img {
+				height: 4em;
+			}
+
+			.icon-row button {
+				padding: 0 2em;
+			}
+
+			.icon-row button.padding {
+				padding: 0 3em;
+			}
+
+			.timer {
+				display: flex;
+				align-items: center;
+				font-size: 2em;
+				margin-top: 1em;
+				padding: 0em 1em;
+			}
+
+			.timer .scrubber-container {
+				padding: 0 0.5em;
+				flex-grow: 1;
+			}
+
+			.timer .scrubber-container .scrubber {
+				height: 0.7em;
+				background-color: #888;
+				border-radius: 100px;
+			}
+
+			.timer .scrubber-container .scrubber .bar {
+				width: 0%;
+				height: 100%;
+				background-color: #fa7d34;
+				border-radius: 100px;
+				border-bottom-right-radius: 0;
+				border-top-right-radius: 0;
+			}
+
+			.tracks {
+				background-color: #999;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			.track-table {
+				font-size: 2em;
+				width: 80%;
+				padding: 1em 0em;
+			}
+
+			.track-table thead tr th {
+				color: #000;
+				border-bottom: 2px solid #555;
+			}
+
+			.track-table tbody tr td {
+				text-align: center;
+			}
+
+			.track-table tbody tr:first-child td {
+				padding-top: 0.2em;
+			}
+
+			.track-table tbody tr td a {
+				text-decoration: none;
+				font-weight: bold;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="controls">
+			<div class="icon-row">
+				<button id="skip-back" class="small"><img class="button-icon small" src="skipl.svg" /></button>
+				<button id="skip-back-chapter" class="small"><img class="button-icon small" src="nextl.svg" /></button>
+				<button id="pause-play" class="padding"><img id="pause-play-image" class="button-icon" src="pause.svg" /></button>
+				<button id="skip-forward-chapter" class="small"><img class="button-icon small" src="nextr.svg" /></button>
+				<button id="skip-forward" class="small"><img class="button-icon small" src="skipr.svg" /></button>
+			</div>
+			<div class="timer">
+				<div class="time" id="scrubber-current-time">0:00</div>
+				<div class="scrubber-container">
+					<div class="scrubber" id="scrubber-background-bar">
+						<div class="bar" id="scrubber-bar"></div>
+					</div>
+				</div>
+				<div class="time" id="scrubber-total-time">25:00</div>
+			</div>
+		</div>
+
+		<div class="tracks">
+			<table class="track-table">
+				<thead>
+					<tr>
+						<th>Audio Tracks</th>
+					</tr>
+				</thead>
+
+				<tbody id="audio-tracks-body">
+				</tbody>
+			</table>
+
+			<table class="track-table">
+				<thead>
+					<tr>
+						<th>Subtitle Tracks</th>
+					</tr>
+				</thead>
+
+				<tbody id="subtitle-tracks-body">
+				</tbody>
+			</table>
+		</div>
+	</body>
+
+	<script src="index.js"></script>
+</html>
