@@ -231,7 +231,7 @@ async def connection(websocket, path):
 		else:
 			VLCCLIENT.send_command(command)
 
-websocket_loop = websockets.serve(connection, "192.168.0.83", 10000)
+websocket_loop = websockets.serve(connection, "%%ipaddress%%", 10000)
 
 # this works, idk how, don't touch it
 def send_directories(connection = None):

@@ -1,6 +1,6 @@
 class EntertainmentWebSocket {
 	constructor() {
-		this.websocket = new WebSocket("ws://192.168.0.83:10000/")
+		this.websocket = new WebSocket("ws://%%ipaddress%%:10000/")
 		this.websocket.onopen = this.opened.bind(this)
 		this.websocket.onmessage = this.messaged.bind(this)
 
