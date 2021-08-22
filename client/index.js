@@ -1,11 +1,9 @@
 class EntertainmentWebSocket {
 	constructor() {
-		this.websocket = new WebSocket("ws://%%ipaddress%%:10000/")
-		this.websocket.onopen = this.opened.bind(this)
-		this.websocket.onmessage = this.messaged.bind(this)
+		this.connect()
 
 		this.openPromises = []
-		this.opened = false
+		this.isOpen = false
 
 		this.audioInfo = []
 		this.subtitleInfo = []
@@ -21,17 +19,34 @@ class EntertainmentWebSocket {
 
 	async waitUntilConnected() {
 		return new Promise((resolve, reject) => {
-			if(this.opened) {
+			if(this.isOpen) {
 				return resolve()
 			}
 			
-			this.openPromises.push(resolve)
+			this.openPromises.push([resolve, reject])
 		})
 	}
 
+	connect() {
+		this.websocket = new WebSocket("ws://%%ipaddress%%:10000/")
+		this.websocket.onopen = this.opened.bind(this)
+		this.websocket.onmessage = this.messaged.bind(this)
+		this.websocket.onclose = this.closed.bind(this)
+	}
+
+	reconnect() {
+		if(this.isOpen) {
+			return
+		}
+
+		setTimeout(async () => {
+			this.connect()
+		}, 2000)
+	}
+
 	opened() {
-		this.opened = true
-		for(const promise of this.openPromises) {
+		this.isOpen = true
+		for(const [promise, _] of this.openPromises) {
 			promise()
 		}
 	}
@@ -95,6 +110,15 @@ class EntertainmentWebSocket {
 				break
 			}
 		}
+	}
+
+	closed() {
+		this.isOpen = false
+		for(const [_, promise] of this.openPromises) {
+			promise()
+		}
+
+		this.reconnect()
 	}
 
 	updatePlayPause() {
