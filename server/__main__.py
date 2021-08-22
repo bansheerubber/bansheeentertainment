@@ -1,6 +1,7 @@
 import asyncio
 from enum import Enum
 import json
+import os
 import re
 import socket
 import websockets
@@ -10,6 +11,8 @@ import random
 CONNECTIONS = []
 VLCCLIENT = None
 LOOP = asyncio.get_event_loop()
+VLC_DOWNLOADS = "Downloads"
+VLC_DOWNLOADS_PREFIX = "/home/me/"
 
 class InterpretMode(Enum):
 	NONE = 0
@@ -119,17 +122,9 @@ class VLCClient(asyncio.Protocol):
 	def send_to_all(self, message):
 		global CONNECTIONS
 		for connection in CONNECTIONS:
-			async def test():
-				number = random.random()
-				# if "is_playing" in message:
-				# 	print(f"trying to send... {message}")
-				await connection.send(message + "\r\n")
-				# print("done")
-			LOOP.create_task(test())
+			LOOP.create_task(connection.send(message + "\r\n"))
 	
 	def handle_tracks(self, line, array, array_command):
-		global CONNECTIONS
-
 		regex = re.compile(r"(?:\|\s+)([-\d]+)(?:[\s-]+)(.+)")
 		matches = regex.match(line)
 		if not matches:
@@ -170,10 +165,17 @@ class VLCClient(asyncio.Protocol):
 			"info": self.subtitle_info,
 		}))
 
+		global VLC_DOWNLOADS_PREFIX
+		self.send_to_all(json.dumps({
+			"command": "path_prefix",
+			"info": VLC_DOWNLOADS_PREFIX,
+		}))
+
 async def connection(websocket, path):
 	CONNECTIONS.append(websocket)
 
 	VLCCLIENT.send_info(websocket)
+	send_directories(websocket)
 
 	while True:
 		try:
@@ -181,9 +183,85 @@ async def connection(websocket, path):
 		except: # disconnection or something
 			CONNECTIONS.remove(websocket)
 			return
-		VLCCLIENT.send_command(command)
+		
+		if command.strip() == "refresh-directory":
+			send_directories(websocket)
+		else:
+			VLCCLIENT.send_command(command)
 
 websocket_loop = websockets.serve(connection, "192.168.0.83", 10000)
+
+# this works, idk how, don't touch it
+def send_directories(connection = None):
+	global VLC_DOWNLOADS
+	global VLC_DOWNLOADS_PREFIX
+	
+	structure = {}
+	def create_directory_in_structure(split):
+		name = split[-1]
+
+		found_structure = structure
+		for i in range(0, len(split) - 1):
+			new_name = split[i]
+			found_structure = found_structure[new_name]["structure"]
+
+		if name not in found_structure:
+			directory = {
+				"directory": True,
+				"name": name,
+				"path": "/".join(split),
+				"paths": [],
+			}
+			
+			found_structure[name] = {
+				"path_object": directory,
+				"structure": {},
+			}
+
+			return directory
+		else:
+			found_structure[name]["path_object"]["directory"] = True
+			found_structure[name]["path_object"]["paths"] = []
+			return found_structure[name]["path_object"]
+	
+	def get_path_object_from_root(split):
+		found_object = None
+		found_structure = structure
+		for i in range(0, len(split)):
+			name = split[i]
+			found_object = found_structure[name]["path_object"]
+			found_structure = found_structure[name]["structure"]
+
+		return found_object
+
+	output = create_directory_in_structure([VLC_DOWNLOADS])
+	
+	for root, directories, files in os.walk(f"{VLC_DOWNLOADS_PREFIX}{VLC_DOWNLOADS}"):
+		without_prefix = root.replace(VLC_DOWNLOADS_PREFIX, "")
+		split = root.replace(VLC_DOWNLOADS_PREFIX, "").split("/")
+		path = create_directory_in_structure(split)
+
+		for directory in directories:
+			path["paths"].append(create_directory_in_structure(split + [directory]))
+		
+		for file in files:
+			path["paths"].append({
+				"directory": False,
+				"name": file,
+				"path": f"{without_prefix}/{file}",
+			})
+	
+	message = json.dumps({
+		"command": "paths",
+		"info": output,
+	})
+
+	if connection == None:
+		global CONNECTIONS
+		for connection in CONNECTIONS:
+			LOOP.create_task(connection.send(message + "\r\n"))
+	else:
+			LOOP.create_task(connection.send(message + "\r\n"))
 
 LOOP.run_until_complete(websocket_loop)
 LOOP.run_until_complete(LOOP.create_connection(VLCClient, "localhost", 4212))

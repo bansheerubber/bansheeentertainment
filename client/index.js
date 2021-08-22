@@ -67,6 +67,16 @@ class EntertainmentWebSocket {
 				this.updatePlayPause()
 				break
 			}
+
+			case "paths": {
+				document.getElementById("directory").appendChild(createDirectoryList(jsonData.info))
+				break
+			}
+
+			case "path_prefix": {
+				this.pathPrefix = jsonData.info
+				break
+			}
 		}
 	}
 
@@ -189,7 +199,7 @@ class EntertainmentWebSocket {
 	}
 }
 
-const socket = new EntertainmentWebSocket()
+var socket = new EntertainmentWebSocket()
 
 document.getElementById("skip-back").addEventListener("click", (event) => {
 	socket.send("prev\n")
