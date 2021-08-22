@@ -155,6 +155,12 @@
 				margin: 1em;
 				font-size: 2em;
 			}
+
+			.title {
+				font-size: 2em;
+				padding-top: 0.5em;
+				text-align: center;
+			}
 		</style>
 	</head>
 
@@ -176,9 +182,21 @@
 				</div>
 				<div class="time" id="scrubber-total-time">25:00</div>
 			</div>
+			<div class="title" id="title"></div>
 		</div>
 
 		<div class="tracks">
+			<table class="track-table">
+				<thead>
+					<tr>
+						<th>Playlist</th>
+					</tr>
+				</thead>
+
+				<tbody id="playlist-body">
+				</tbody>
+			</table>
+			
 			<table class="track-table">
 				<thead>
 					<tr>

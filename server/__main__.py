@@ -5,6 +5,7 @@ import os
 import re
 import socket
 import websockets
+from time import time
 
 import random
 
@@ -18,6 +19,7 @@ class InterpretMode(Enum):
 	NONE = 0
 	SUBTITLE = 1
 	AUDIO = 2
+	PLAYLIST = 3
 
 class VLCClient(asyncio.Protocol):
 	def __init__(self):
@@ -28,6 +30,10 @@ class VLCClient(asyncio.Protocol):
 		self.command_queue = []
 		self.subtitle_info = []
 		self.audio_info = []
+		self.playlist_info = []
+		self.playlist_flat = []
+		self.current_title = None
+		self.last_current_title_set = 0
 		self.current_time = None
 		self.total_time = None
 		self.mode = InterpretMode.NONE
@@ -38,6 +44,8 @@ class VLCClient(asyncio.Protocol):
 		self.enqueue_command(b"get_length\n")
 		self.transport.write(b"atrack\n")
 		self.transport.write(b"strack\n")
+		self.transport.write(b"playlist\n")
+		self.transport.write(b"get_title\n")
 	
 	def enqueue_command(self, command): # handle get_time and get_length
 		self.transport.write(command)
@@ -75,6 +83,9 @@ class VLCClient(asyncio.Protocol):
 			self.interpret_output(output)
 	
 	def interpret_output(self, output):
+		if time() - self.last_current_title_set > 5000:
+			self.current_title = None
+		
 		self.mode = InterpretMode.NONE
 		split = output.split("\r\n")
 		for line in split:
@@ -83,9 +94,25 @@ class VLCClient(asyncio.Protocol):
 				self.handle_tracks(line, self.subtitle_info, "strack")
 			elif self.mode == InterpretMode.AUDIO: # handle audio tracks
 				self.handle_tracks(line, self.audio_info, "atrack")
+			elif self.mode == InterpretMode.PLAYLIST: # handle audio tracks
+				self.handle_tracks(line, self.playlist_info, "playlist")
+				self.playlist_flat = []
+				regex = re.compile(r"(.+?)(?:\(.+\))$")
+				for _, name in self.playlist_info:
+					matched = regex.match(name)
+					if matched:
+						self.playlist_flat.append(matched.group(1).strip())
 			
 			if "Press pause to continue" in line:
 				self.set_is_playing(False)
+			elif line in self.playlist_flat:
+				self.current_title = line
+				self.last_current_title_set = time()
+
+				self.send_to_all(json.dumps({
+					"command": "get_title",
+					"info": self.current_title,
+				}))
 			elif line == "+----[ Subtitle Track ]":
 				self.mode = InterpretMode.SUBTITLE
 				self.subtitle_info = []
@@ -94,6 +121,11 @@ class VLCClient(asyncio.Protocol):
 			elif line == "+----[ Audio Track ]":
 				self.mode = InterpretMode.AUDIO
 				self.audio_info = []
+
+				self.set_is_playing(True)
+			elif line == "|- Playlist":
+				self.mode = InterpretMode.PLAYLIST
+				self.playlist_info = []
 
 				self.set_is_playing(True)
 			elif re.compile("\d+").match(line):
@@ -154,6 +186,11 @@ class VLCClient(asyncio.Protocol):
 			"command": "get_length",
 			"info": self.total_time,
 		}))
+
+		self.send_to_all(json.dumps({
+			"command": "get_title",
+			"info": self.current_title,
+		}))
 		
 		self.send_to_all(json.dumps({
 			"command": "atrack",
@@ -163,6 +200,11 @@ class VLCClient(asyncio.Protocol):
 		self.send_to_all(json.dumps({
 			"command": "strack",
 			"info": self.subtitle_info,
+		}))
+
+		self.send_to_all(json.dumps({
+			"command": "playlist",
+			"info": self.playlist_info,
 		}))
 
 		global VLC_DOWNLOADS_PREFIX

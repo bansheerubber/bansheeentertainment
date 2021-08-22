@@ -9,6 +9,7 @@ class EntertainmentWebSocket {
 
 		this.audioInfo = []
 		this.subtitleInfo = []
+		this.playlistInfo = []
 
 		this.currentTime = null
 		this.totalTime = null
@@ -50,6 +51,12 @@ class EntertainmentWebSocket {
 				break
 			}
 
+			case "playlist": {
+				this.playlistInfo = jsonData.info
+				this.createTable("goto", this.playlistInfo, "playlist-body")
+				break
+			}
+
 			case "get_time": {
 				this.currentTime = jsonData.info
 				this.updateScrubber()
@@ -59,6 +66,16 @@ class EntertainmentWebSocket {
 			case "get_length": {
 				this.totalTime = jsonData.info
 				this.updateScrubber()
+				break
+			}
+			
+			case "get_title": {
+				if(jsonData.info !== null) {
+					document.getElementById("title").innerHTML = jsonData.info
+				}
+				else {
+					document.getElementById("title").innerHTML = "N/A"
+				}
 				break
 			}
 			
@@ -175,8 +192,13 @@ class EntertainmentWebSocket {
 			a.href = ""
 
 			a.addEventListener("click", (event) => {
-				console.log("oh hey there")
-				this.send(`strack ${element[0]}\n`)
+				if(element[0] == "-") { // handle playlist selection
+					const newArray = array.map(element => element[1])
+					this.send(`${command} ${newArray.indexOf(element[1]) + 1}\n`)
+				}
+				else {
+					this.send(`${command} ${element[0]}\n`)
+				}
 				event.preventDefault()
 			})
 		}
