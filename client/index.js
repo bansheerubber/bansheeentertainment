@@ -101,6 +101,7 @@ class EntertainmentWebSocket {
 			}
 
 			case "paths": {
+				document.getElementById("directory").innerHTML = ""
 				document.getElementById("directory").appendChild(createDirectoryList(jsonData.info))
 				break
 			}

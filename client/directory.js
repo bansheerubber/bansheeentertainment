@@ -197,6 +197,10 @@ for(const extension of extensions) {
 }
 
 document.getElementById("clear-playlist").addEventListener("click", (event) => {
+	if(!socket.isPlaying) {
+		socket.send("pause\n")
+	}
+
 	socket.send("clear\n")
 })
 
@@ -205,6 +209,10 @@ document.getElementById("refresh-directory").addEventListener("click", (event) =
 })
 
 document.getElementById("set-playlist").addEventListener("click", (event) => {
+	if(!socket.isPlaying) {
+		socket.send("pause\n")
+	}
+	
 	socket.send("clear\n")
 	
 	let paths = selectedPathsList
@@ -218,9 +226,15 @@ document.getElementById("set-playlist").addEventListener("click", (event) => {
 			socket.send(`add ${socket.pathPrefix}${path}\r\n`)
 		}
 	}
+
+	socket.send("goto 1")
 })
 
 document.getElementById("add-to-playlist").addEventListener("click", (event) => {
+	if(!socket.isPlaying) {
+		socket.send("pause\n")
+	}
+	
 	let paths = selectedPathsList
 	if(isDirectory[selectedPathsList[0]]) {
 		paths = filesUnderDirectory[selectedPathsList[0]]
