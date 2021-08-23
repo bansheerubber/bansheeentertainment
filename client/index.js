@@ -197,7 +197,11 @@ class EntertainmentWebSocket {
 		document.getElementById("scrubber-current-time").innerHTML = `${currentHours}${currentMinutes}${currentSeconds}`
 		document.getElementById("scrubber-total-time").innerHTML = `${totalHours}${totalMinutes}${totalSeconds}`
 		
-		document.getElementById("scrubber-bar").style.width = `${(this.currentTime / this.totalTime) * 100}%`
+		this.updateScrubberPercent(this.currentTime / this.totalTime)
+	}
+
+	updateScrubberPercent(percent) {
+		document.getElementById("scrubber-bar").style.width = `${percent * 100}%`
 	}
 
 	createTable(command, array, id) {
@@ -229,7 +233,7 @@ class EntertainmentWebSocket {
 		}
 	}
 
-	scrub(percent) {
+	scrub(percent, updateUi = false) {
 		if(!this.isPlaying) {
 			this.send("pause\n")
 		}
@@ -239,6 +243,8 @@ class EntertainmentWebSocket {
 		if(!this.isPlaying) {
 			this.send("pause\n")
 		}
+
+		this.updateScrubberPercent(percent)
 	}
 
 	send(message) {
@@ -270,6 +276,12 @@ document.getElementById("skip-forward").addEventListener("click", (event) => {
 
 document.getElementById("scrubber-bar").addEventListener("click", (event) => {
 	socket.scrub((event.offsetX / document.getElementById("scrubber-bar").clientWidth) * (socket.currentTime / socket.totalTime))
+})
+
+document.getElementById("scrubber-background-bar").addEventListener("touchmove", (event) => {
+	const left = document.getElementById("scrubber-background-bar").getBoundingClientRect().left
+	const percent = Math.max(0, Math.min(1, (event.changedTouches[0].clientX - left) / document.getElementById("scrubber-background-bar").clientWidth))
+	socket.scrub(percent, true)
 })
 
 document.getElementById("scrubber-background-bar").addEventListener("click", (event) => {
