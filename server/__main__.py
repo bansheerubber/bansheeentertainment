@@ -5,6 +5,7 @@ import os
 import re
 import socket
 import websockets
+from .qbittorrent import QBitTorrent
 from time import time
 
 import random
@@ -14,6 +15,7 @@ VLCCLIENT = None
 LOOP = asyncio.get_event_loop()
 VLC_DOWNLOADS = "Downloads"
 VLC_DOWNLOADS_PREFIX = "/home/me/"
+QBITTORRENT = QBitTorrent(CONNECTIONS, LOOP)
 
 class InterpretMode(Enum):
 	NONE = 0
@@ -59,6 +61,11 @@ class VLCClient(asyncio.Protocol):
 		self.transport.write(command)
 		self.command_queue.append(command)
 
+	async def query_torrents_loop(self):
+		while True:
+			await QBITTORRENT.get_torrents()
+			await asyncio.sleep(5)
+
 	async def query_tracks_loop(self):
 		while True:
 			self.query_tracks()
@@ -69,6 +76,7 @@ class VLCClient(asyncio.Protocol):
 
 		global LOOP
 		LOOP.create_task(self.query_tracks_loop())
+		LOOP.create_task(self.query_torrents_loop())
 	
 	def send_command(self, command):
 		self.transport.write(command.encode("utf8"))
@@ -247,8 +255,10 @@ async def connection(websocket, path):
 			CONNECTIONS.remove(websocket)
 			return
 		
-		if command.strip() == "refresh-directory":
+		if command == "refresh-directory":
 			send_directories(websocket)
+		elif command.split(" ")[0] == "qbt":
+			LOOP.create_task(QBITTORRENT.send_command(command.strip().split(" ")[1:]))
 		else:
 			VLCCLIENT.send_command(command)
 

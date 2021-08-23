@@ -116,6 +116,11 @@ class EntertainmentWebSocket {
 				this.updateVolumeScrubberPercent(this.volume / 256)
 				break
 			}
+
+			case "torrent_list": {
+				createTorrentTable(jsonData.info)
+				break
+			}
 		}
 	}
 
@@ -329,4 +334,8 @@ document.getElementById("volume-scrubber-container").addEventListener("click", (
 		const height = document.getElementById("volume-scrubber-container").clientHeight
 		socket.scrubVolume((height - event.offsetY) / height)
 	}
+})
+
+document.getElementById("add-torrent-button").addEventListener("click", (event) => {
+	socket.send(`qbt torrent add url ${document.getElementById("add-torrent-input").value}`)
 })

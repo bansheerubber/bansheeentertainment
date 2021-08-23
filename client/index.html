@@ -197,6 +197,62 @@
 				font-size: 2em;
 				padding-top: 0.5em;
 			}
+
+			.torrent-info-container {
+				display: flex;
+				align-items: center;
+			}
+
+			.torrent-progress {
+				flex-grow: 0;
+				padding-right: 0.5em;
+			}
+
+			.torrent-name {
+				flex-grow: 1;
+				padding: 0em 0.5em;
+			}
+
+			.torrent-delete {
+				padding-left: 0.5em;
+			}
+
+			.torrent-delete button {
+				font-size: 1.25em;
+				width: 1.5em;
+				height: 1.5em;
+				border: 0;
+				border-radius: 0.1em;
+				background-color: #777;
+			}
+
+			.torrent-delete button:active {
+				background-color: #fa7d34;
+			}
+
+			.add-torrent-container {
+				display: flex;
+			}
+
+			.add-torrent-container div {
+				padding: 0em 0.25em;
+			}
+
+			.add-torrent-container input {
+				padding: 0.1em;
+				font-size: 2em;
+				box-sizing: border-box;
+			}
+
+			.add-torrent-container button {
+				padding: 0.1em 0.7em;
+				font-size: 2em;
+				box-sizing: border-box;
+			}
+
+			.add-torrent-container button:active {
+				background-color: #fa7d34;
+			}
 		</style>
 	</head>
 
@@ -255,6 +311,26 @@
 					<tbody id="subtitle-tracks-body">
 					</tbody>
 				</table>
+
+				<table class="track-table">
+					<thead>
+						<tr>
+							<th>Torrents</th>
+						</tr>
+					</thead>
+
+					<tbody id="torrents-body">
+					</tbody>
+				</table>
+
+				<div class="add-torrent-container">
+					<div>
+						<input id="add-torrent-input" type="text" placeholder="Torrent URL" />
+					</div>
+					<div>
+						<button id="add-torrent-button">Add</button>
+					</div>
+				</div>
 			</div>
 
 			<div class="volume-container">
@@ -278,4 +354,5 @@
 
 	<script src="index.js"></script>
 	<script src="directory.js"></script>
+	<script src="torrents.js"></script>
 </html>
