@@ -81,6 +81,7 @@
 				display: flex;
 				flex-direction: column;
 				align-items: center;
+				width: 90%;
 			}
 
 			.track-table {
@@ -161,6 +162,41 @@
 				padding-top: 0.5em;
 				text-align: center;
 			}
+
+			.tracks-and-volume-container {
+				display: flex;
+				justify-content: center;
+				width: 100%;
+				padding-top: 2em;
+			}
+
+			.volume-scrubber-container {
+				width: 1.7em;
+				height: 70vh;
+				background-color: #888;
+				border-radius: 100px;
+				position: relative;
+			}
+
+			.volume-scrubber {
+				width: 100%;
+				height: 50%;
+				bottom: 0;
+				position: absolute;
+				background-color: #fa7d34;
+				border-radius: 100px;
+			}
+
+			.volume-container {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			.volume-percent {
+				font-size: 2em;
+				padding-top: 0.5em;
+			}
 		</style>
 	</head>
 
@@ -185,39 +221,48 @@
 			<div class="title" id="title"></div>
 		</div>
 
-		<div class="tracks">
-			<table class="track-table">
-				<thead>
-					<tr>
-						<th>Playlist</th>
-					</tr>
-				</thead>
+		<div class="tracks-and-volume-container">
+			<div class="tracks">
+				<table class="track-table">
+					<thead>
+						<tr>
+							<th>Playlist</th>
+						</tr>
+					</thead>
 
-				<tbody id="playlist-body">
-				</tbody>
-			</table>
-			
-			<table class="track-table">
-				<thead>
-					<tr>
-						<th>Audio Tracks</th>
-					</tr>
-				</thead>
+					<tbody id="playlist-body">
+					</tbody>
+				</table>
+				
+				<table class="track-table">
+					<thead>
+						<tr>
+							<th>Audio Tracks</th>
+						</tr>
+					</thead>
 
-				<tbody id="audio-tracks-body">
-				</tbody>
-			</table>
+					<tbody id="audio-tracks-body">
+					</tbody>
+				</table>
 
-			<table class="track-table">
-				<thead>
-					<tr>
-						<th>Subtitle Tracks</th>
-					</tr>
-				</thead>
+				<table class="track-table">
+					<thead>
+						<tr>
+							<th>Subtitle Tracks</th>
+						</tr>
+					</thead>
 
-				<tbody id="subtitle-tracks-body">
-				</tbody>
-			</table>
+					<tbody id="subtitle-tracks-body">
+					</tbody>
+				</table>
+			</div>
+
+			<div class="volume-container">
+				<div class="volume-scrubber-container" id="volume-scrubber-container">
+					<div class="volume-scrubber" id="volume-scrubber"></div>
+				</div>
+				<div class="volume-percent" id="volume-percent">100%</div>
+			</div>
 		</div>
 
 		<div class="directory-container" id="directory"></div>

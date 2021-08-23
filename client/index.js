@@ -110,6 +110,12 @@ class EntertainmentWebSocket {
 				this.pathPrefix = jsonData.info
 				break
 			}
+
+			case "volume": {
+				this.volume = jsonData.info
+				this.updateVolumeScrubberPercent(this.volume / 256)
+				break
+			}
 		}
 	}
 
@@ -204,6 +210,11 @@ class EntertainmentWebSocket {
 		document.getElementById("scrubber-bar").style.width = `${percent * 100}%`
 	}
 
+	updateVolumeScrubberPercent(percent) {
+		document.getElementById("volume-scrubber").style.height = `${percent * 100}%`
+		document.getElementById("volume-percent").innerHTML = `${Math.floor(percent * 100)}%`
+	}
+
 	createTable(command, array, id) {
 		const table = document.getElementById(id)
 		table.innerHTML = ""
@@ -244,7 +255,17 @@ class EntertainmentWebSocket {
 			this.send("pause\n")
 		}
 
-		this.updateScrubberPercent(percent)
+		if(updateUi) {
+			this.updateScrubberPercent(percent)
+		}
+	}
+
+	scrubVolume(percent, updateUi = false) {
+		this.send(`volume ${Math.floor(percent * 256)}\n`)
+
+		if(updateUi) {
+			this.updateVolumeScrubberPercent(percent)
+		}
 	}
 
 	send(message) {
@@ -286,4 +307,26 @@ document.getElementById("scrubber-background-bar").addEventListener("touchmove",
 
 document.getElementById("scrubber-background-bar").addEventListener("click", (event) => {
 	socket.scrub(event.offsetX / document.getElementById("scrubber-background-bar").clientWidth)
+})
+
+// handle volume stuff
+var lastVolumeScrub;
+document.getElementById("volume-scrubber").addEventListener("click", (event) => {
+	const height = document.getElementById("volume-scrubber").clientHeight
+	socket.scrubVolume(((height - event.offsetY) / height) * (socket.volume / 256))
+	lastVolumeScrub = Date.now()
+})
+
+document.getElementById("volume-scrubber-container").addEventListener("touchmove", (event) => {
+	const bottom = document.getElementById("volume-scrubber-container").getBoundingClientRect().bottom
+	const percent = Math.max(0, Math.min(1, (bottom - event.changedTouches[0].clientY) / document.getElementById("volume-scrubber-container").clientHeight))
+	socket.scrubVolume(percent, true)
+	event.preventDefault()
+})
+
+document.getElementById("volume-scrubber-container").addEventListener("click", (event) => {
+	if(Date.now() - lastVolumeScrub > 20) {
+		const height = document.getElementById("volume-scrubber-container").clientHeight
+		socket.scrubVolume((height - event.offsetY) / height)
+	}
 })

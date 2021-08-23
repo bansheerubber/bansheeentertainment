@@ -38,14 +38,22 @@ class VLCClient(asyncio.Protocol):
 		self.total_time = None
 		self.mode = InterpretMode.NONE
 		self.is_playing = False
+		self.volume = 0
+		self.flip_flop = 0
 	
 	def query_tracks(self):
-		self.enqueue_command(b"get_time\n")
-		self.enqueue_command(b"get_length\n")
-		self.transport.write(b"atrack\n")
-		self.transport.write(b"strack\n")
-		self.transport.write(b"playlist\n")
-		self.transport.write(b"get_title\n")
+		self.enqueue_command(b"get_time\r\n")
+		self.enqueue_command(b"get_length\r\n")
+
+		if self.flip_flop: # alternate getting information so we don't screw up VLC
+			self.transport.write(b"volume\r\n")
+			self.transport.write(b"atrack\r\n")
+			self.transport.write(b"strack\r\n")
+		else:
+			self.transport.write(b"playlist\r\n")
+			self.transport.write(b"get_title\r\n")
+
+		self.flip_flop = not self.flip_flop
 	
 	def enqueue_command(self, command): # handle get_time and get_length
 		self.transport.write(command)
@@ -128,14 +136,22 @@ class VLCClient(asyncio.Protocol):
 				self.playlist_info = []
 
 				self.set_is_playing(True)
+			elif "audio volume" in line:
+				match = re.search(r"([0-9]+)", line)
+				if match:
+					self.volume = int(match.group(1))
+					self.send_to_all(json.dumps({
+						"command": "volume",
+						"info": self.volume,
+					}))
 			elif re.compile("\d+").match(line):
-				if self.command_queue[0] == b"get_time\n":
+				if self.command_queue[0] == b"get_time\r\n":
 					self.current_time = int(line)
 					self.send_to_all(json.dumps({
 						"command": "get_time",
 						"info": self.current_time,
 					}))
-				elif self.command_queue[0] == b"get_length\n":
+				elif self.command_queue[0] == b"get_length\r\n":
 					self.total_time = int(line)
 					self.send_to_all(json.dumps({
 						"command": "get_length",
@@ -205,6 +221,11 @@ class VLCClient(asyncio.Protocol):
 		self.send_to_all(json.dumps({
 			"command": "playlist",
 			"info": self.playlist_info,
+		}))
+
+		self.send_to_all(json.dumps({
+			"command": "volume",
+			"info": self.volume,
 		}))
 
 		global VLC_DOWNLOADS_PREFIX
