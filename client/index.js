@@ -266,7 +266,13 @@ class EntertainmentWebSocket {
 	}
 
 	scrubVolume(percent, updateUi = false) {
-		this.send(`volume ${Math.floor(percent * 256)}\n`)
+		if(this.scrubTimeout) {
+			clearTimeout(this.scrubTimeout)
+		}
+		
+		this.scrubTimeout = setTimeout(() => {
+			this.send(`volume ${Math.floor(percent * 256)}\n`)
+		}, 33)
 
 		if(updateUi) {
 			this.updateVolumeScrubberPercent(percent)
@@ -332,7 +338,7 @@ document.getElementById("actual-volume-scrubber").addEventListener("touchmove", 
 document.getElementById("actual-volume-scrubber").addEventListener("click", (event) => {
 	if(Date.now() - lastVolumeScrub > 20) {
 		const height = document.getElementById("volume-scrubber-container").clientHeight
-		socket.scrubVolume((height - event.offsetY) / height)
+		socket.scrubVolume((height - event.offsetY) / height, true)
 	}
 })
 
