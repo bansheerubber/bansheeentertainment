@@ -170,7 +170,13 @@
 				padding-top: 2em;
 			}
 
+			.actual-volume-scrubber {
+				width: 7em;
+				height: 70vh;
+			}
+
 			.volume-scrubber-container {
+				margin: auto;
 				width: 1.7em;
 				height: 70vh;
 				background-color: #888;
@@ -334,8 +340,10 @@
 			</div>
 
 			<div class="volume-container">
-				<div class="volume-scrubber-container" id="volume-scrubber-container">
-					<div class="volume-scrubber" id="volume-scrubber"></div>
+				<div class="actual-volume-scrubber"  id="actual-volume-scrubber">
+					<div class="volume-scrubber-container" id="volume-scrubber-container">
+						<div class="volume-scrubber" id="volume-scrubber"></div>
+					</div>
 				</div>
 				<div class="volume-percent" id="volume-percent">100%</div>
 			</div>

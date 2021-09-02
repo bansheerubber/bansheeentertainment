@@ -322,14 +322,14 @@ document.getElementById("volume-scrubber").addEventListener("click", (event) => 
 	lastVolumeScrub = Date.now()
 })
 
-document.getElementById("volume-scrubber-container").addEventListener("touchmove", (event) => {
+document.getElementById("actual-volume-scrubber").addEventListener("touchmove", (event) => {
 	const bottom = document.getElementById("volume-scrubber-container").getBoundingClientRect().bottom
 	const percent = Math.max(0, Math.min(1, (bottom - event.changedTouches[0].clientY) / document.getElementById("volume-scrubber-container").clientHeight))
 	socket.scrubVolume(percent, true)
 	event.preventDefault()
 })
 
-document.getElementById("volume-scrubber-container").addEventListener("click", (event) => {
+document.getElementById("actual-volume-scrubber").addEventListener("click", (event) => {
 	if(Date.now() - lastVolumeScrub > 20) {
 		const height = document.getElementById("volume-scrubber-container").clientHeight
 		socket.scrubVolume((height - event.offsetY) / height)
