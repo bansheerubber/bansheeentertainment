@@ -29,6 +29,7 @@ class VLCClient(asyncio.Protocol):
 		VLCCLIENT = self
 		
 		self.buffer = ""
+		self.times = []
 		self.command_queue = []
 		self.subtitle_info = []
 		self.audio_info = []
@@ -44,8 +45,8 @@ class VLCClient(asyncio.Protocol):
 		self.flip_flop = 0
 	
 	def query_tracks(self):
-		self.enqueue_command(b"get_time\r\n")
-		self.enqueue_command(b"get_length\r\n")
+		self.transport.write(b"get_time\r\n")
+		self.transport.write(b"get_length\r\n")
 
 		if self.flip_flop: # alternate getting information so we don't screw up VLC
 			self.transport.write(b"volume\r\n")
@@ -152,21 +153,23 @@ class VLCClient(asyncio.Protocol):
 						"command": "volume",
 						"info": self.volume,
 					}))
-			elif re.compile("\d+").match(line):
-				if self.command_queue[0] == b"get_time\r\n":
-					self.current_time = int(line)
+			elif re.compile("^\d+$").match(line):
+				self.times.append(int(line))
+				if len(self.times) >= 2:
+					self.total_time = max(self.times)
+					self.current_time = min(self.times)
+
 					self.send_to_all(json.dumps({
 						"command": "get_time",
 						"info": self.current_time,
 					}))
-				elif self.command_queue[0] == b"get_length\r\n":
-					self.total_time = int(line)
+
 					self.send_to_all(json.dumps({
 						"command": "get_length",
 						"info": self.total_time,
 					}))
-				
-				self.command_queue.pop(0)
+
+					self.times = []
 	
 	def set_is_playing(self, is_playing):
 		self.is_playing = is_playing
