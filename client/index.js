@@ -160,7 +160,7 @@ class EntertainmentWebSocket {
 			currentHours = `${currentHours}:`
 		}
 		
-		let currentMinutes = Math.floor(this.currentTime / 60)
+		let currentMinutes = Math.floor(this.currentTime / 60) % 60
 		if(currentMinutes < 10) {
 			currentMinutes = `0${currentMinutes}:`
 		}
@@ -188,7 +188,7 @@ class EntertainmentWebSocket {
 			totalHours = `${totalHours}:`
 		}
 
-		let totalMinutes = Math.floor(this.totalTime / 60)
+		let totalMinutes = Math.floor(this.totalTime / 60) % 60
 		if(totalMinutes < 10) {
 			totalMinutes = `0${totalMinutes}:`
 		}
