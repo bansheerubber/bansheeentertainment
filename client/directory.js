@@ -83,6 +83,8 @@ const tabWidth = 60
 
 function createDirectoryEntry(path, name, tab) {
 	const container = document.createElement("div")
+	container.style.maxWidth = "100%"
+	container.style.wordBreak = "break-all"
 	const pathsContainer = document.createElement("div")
 	pathsContainer.id = `${path}-container`
 
