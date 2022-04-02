@@ -56,13 +56,13 @@ class EntertainmentWebSocket {
 		switch(jsonData.command) {
 			case "atrack": {
 				this.audioInfo = jsonData.info
-				this.createTable("atrack", this.audioInfo, "audio-tracks-body")
+				this.createTable("atrack", this.audioInfo, "audio-tracks-body", this.audioPersist)
 				break
 			}
 
 			case "strack": {
 				this.subtitleInfo = jsonData.info
-				this.createTable("strack", this.subtitleInfo, "subtitle-tracks-body")
+				this.createTable("strack", this.subtitleInfo, "subtitle-tracks-body", this.subtitlePersist)
 				break
 			}
 
@@ -70,6 +70,18 @@ class EntertainmentWebSocket {
 				this.playlistInfo = jsonData.info
 				this.createTable("goto", this.playlistInfo, "playlist-body")
 				break
+			}
+
+			case "apersist": {
+				this.audioPersist = jsonData.info
+				this.createTable("atrack", this.audioInfo, "audio-tracks-body", jsonData.info)
+				break	
+			}
+
+			case "spersist": {
+				this.subtitlePersist = jsonData.info
+				this.createTable("strack", this.subtitleInfo, "subtitle-tracks-body", jsonData.info)
+				break	
 			}
 
 			case "get_time": {
@@ -220,9 +232,12 @@ class EntertainmentWebSocket {
 		document.getElementById("volume-percent").innerHTML = `${Math.floor(percent * 100)}%`
 	}
 
-	createTable(command, array, id) {
+	createTable(command, array, id, selected = null) {
 		const table = document.getElementById(id)
 		table.innerHTML = ""
+
+		const selectedTimeouts = {}
+		const lastClick = {}
 
 		for(const element of array) {
 			const tr = document.createElement("tr")
@@ -236,13 +251,30 @@ class EntertainmentWebSocket {
 			a.innerHTML = element[1]
 			a.href = ""
 
+			if(element[0] == selected) {
+				a.style.backgroundColor = "#d4d45f"
+			}
+
 			a.addEventListener("click", (event) => {
-				if(element[0] == "-") { // handle playlist selection
-					const newArray = array.map(element => element[1])
-					this.send(`${command} ${newArray.indexOf(element[1]) + 1}\n`)
+				if(command.includes("track")) {
+					if(Date.now() - (lastClick[element[0]] ?? 0) < 300) { // doubleclick
+						clearTimeout(selectedTimeouts[element[0]])
+						delete selectedTimeouts[element[0]]
+
+						this.send(`${command}-persist ${element[0]}\n`)
+					}
+					else {
+						selectedTimeouts[element[0]] = setTimeout(() => {
+							this.send(`${command} ${element[0]}\n`)
+							delete selectedTimeouts[element[0]]
+						}, 300)
+					}
+
+					lastClick[element[0]] = Date.now()
 				}
 				else {
-					this.send(`${command} ${element[0]}\n`)
+					const newArray = array.map(element => element[1])
+					this.send(`${command} ${newArray.indexOf(element[1]) + 1}\n`)
 				}
 				event.preventDefault()
 			})

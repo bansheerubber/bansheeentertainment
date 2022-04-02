@@ -43,6 +43,10 @@ class VLCClient(asyncio.Protocol):
 		self.is_playing = False
 		self.volume = 0
 		self.flip_flop = 0
+		self.persists = {
+			"atrack": None,
+			"strack": None,
+		}
 	
 	def query_tracks(self):
 		self.transport.write(b"get_time\r\n")
@@ -80,6 +84,18 @@ class VLCClient(asyncio.Protocol):
 		LOOP.create_task(self.query_torrents_loop())
 	
 	def send_command(self, command):
+		if "-persist" in command:
+			command = command.replace("-persist", "")
+			split = command.strip().split(" ")
+			self.persists[split[0]] = split[1]
+
+			self.send_to_all(json.dumps({
+				"command": split[0][0] + "persist",
+				"info": self.persists[split[0]],
+			}))
+		elif "goto" in command:
+			self.current_title = None
+			
 		self.transport.write(command.encode("utf8"))
 		self.query_tracks()
 	
@@ -123,8 +139,18 @@ class VLCClient(asyncio.Protocol):
 			if "Press pause to continue" in line:
 				self.set_is_playing(False)
 			elif line in self.playlist_flat:
+				self.last_current_title = self.current_title
 				self.current_title = line
 				self.last_current_title_set = time()
+
+				if self.last_current_title != self.current_title:
+					if self.persists["atrack"] != None: # handle persistent audio/subtitle tracks
+						value = self.persists["atrack"]
+						self.send_command(f"atrack {value}\n")
+
+					if self.persists["strack"] != None:
+						value = self.persists["strack"]
+						self.send_command(f"strack {value}\n")
 
 				self.send_to_all(json.dumps({
 					"command": "get_title",
@@ -243,6 +269,16 @@ class VLCClient(asyncio.Protocol):
 		self.send_to_all(json.dumps({
 			"command": "path_prefix",
 			"info": VLC_DOWNLOADS_PREFIX,
+		}))
+
+		self.send_to_all(json.dumps({
+			"command": "apersist",
+			"info": self.persists["atrack"],
+		}))
+
+		self.send_to_all(json.dumps({
+			"command": "spersist",
+			"info": self.persists["strack"],
 		}))
 
 async def connection(websocket, path):
